@@ -11,7 +11,7 @@ const pgSession = require("connect-pg-simple")(session);
 
 // Import routes
 const authRoutes = require("./routes/auth.routes");
-const profileRoutes = require("./croutes/profile.routes");
+const profileRoutes = require("./routes/profile.routes");
 const analysisRoute = require("./routes/analysis.routes");
 const playlistRoutes = require("./routes/playlist.routes");
 
@@ -81,5 +81,4 @@ app.use("/api/playlist", playlistRoutes);
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.table(listEndpoints(app));
 });

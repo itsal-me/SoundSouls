@@ -13,7 +13,7 @@ const analyzeMusicTaste = async (prompt) => {
             {
                 headers: {
                     Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                    "HTTP-Referer": "http://localhost:3000", // Update with your URL
+                    "HTTP-Referer": `${process.env.FRONTEND_URL}`, // Update with your URL
                     "X-Title": "SoundSouls",
                 },
             }
