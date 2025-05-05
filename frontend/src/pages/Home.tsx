@@ -15,7 +15,7 @@ export default function HomePage() {
 
     const handleConnectSpotify = () => {
         setIsLoading(true);
-        window.location.href = "/api/auth/login";
+        window.location.href = `${process.env.VITE_APP_API_URL}/api/auth/login`;
     };
 
     return (

@@ -38,9 +38,12 @@ export default function AnalysisPage() {
             try {
                 setIsLoading(true);
 
-                const response = await fetch("/api/analysis", {
-                    credentials: "include",
-                });
+                const response = await fetch(
+                    `${process.env.VITE_APP_API_URL}/api/analysis`,
+                    {
+                        credentials: "include",
+                    }
+                );
 
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -77,10 +80,13 @@ export default function AnalysisPage() {
         try {
             setIsGenerating(true);
 
-            const response = await fetch("/api/analysis/generate", {
-                method: "POST",
-                credentials: "include",
-            });
+            const response = await fetch(
+                `${process.env.VITE_APP_API_URL}/api/analysis/generate`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to generate analysis");
@@ -102,10 +108,13 @@ export default function AnalysisPage() {
         try {
             setIsGenerating(true);
 
-            const response = await fetch("/api/analysis/image", {
-                method: "POST",
-                credentials: "include",
-            });
+            const response = await fetch(
+                `${process.env.VITE_APP_API_URL}/api/analysis/image`,
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to generate shareable image");

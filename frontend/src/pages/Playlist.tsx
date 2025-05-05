@@ -58,9 +58,12 @@ export default function PlaylistPage() {
             try {
                 setIsLoading(true);
 
-                const response = await fetch("/api/playlists", {
-                    credentials: "include",
-                });
+                const response = await fetch(
+                    `${process.env.VITE_APP_API_URL}/api/playlists`,
+                    {
+                        credentials: "include",
+                    }
+                );
 
                 if (!response.ok) {
                     if (response.status === 401) {
@@ -96,17 +99,20 @@ export default function PlaylistPage() {
         try {
             setIsGenerating(true);
 
-            const response = await fetch("/api/playlists/generate", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    name: playlistName,
-                    description: playlistDescription,
-                }),
-                credentials: "include",
-            });
+            const response = await fetch(
+                `${process.env.VITE_APP_API_URL}/api/playlists/generate`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: playlistName,
+                        description: playlistDescription,
+                    }),
+                    credentials: "include",
+                }
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to generate playlist");
@@ -130,18 +136,23 @@ export default function PlaylistPage() {
         try {
             setIsSaving(true);
 
-            const response = await fetch("/api/playlists/save", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    name: generatedPlaylist.name,
-                    description: generatedPlaylist.description,
-                    tracks: generatedPlaylist.tracks.map((track) => track.uri),
-                }),
-                credentials: "include",
-            });
+            const response = await fetch(
+                `${process.env.VITE_APP_API_URL}/api/playlists/save`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        name: generatedPlaylist.name,
+                        description: generatedPlaylist.description,
+                        tracks: generatedPlaylist.tracks.map(
+                            (track) => track.uri
+                        ),
+                    }),
+                    credentials: "include",
+                }
+            );
 
             if (!response.ok) {
                 throw new Error("Failed to save playlist");

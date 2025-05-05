@@ -48,9 +48,12 @@ export default function ProfilePage() {
                 setIsLoading(true);
 
                 // Fetch user profile
-                const profileResponse = await fetch("/api/profile", {
-                    credentials: "include",
-                });
+                const profileResponse = await fetch(
+                    `${process.env.VITE_APP_API_URL}/api/profile`,
+                    {
+                        credentials: "include",
+                    }
+                );
 
                 if (!profileResponse.ok) {
                     if (profileResponse.status === 401) {

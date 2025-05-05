@@ -15,9 +15,12 @@ export default function Navbar() {
         // Check if user is logged in
         const checkLoginStatus = async () => {
             try {
-                const response = await fetch("/api/auth/status", {
-                    credentials: "include",
-                });
+                const response = await fetch(
+                    `${process.env.VITE_APP_API_URL}/api/auth/status`,
+                    {
+                        credentials: "include",
+                    }
+                );
                 const data = await response.json();
                 setIsLoggedIn(data.isLoggedIn);
             } catch (error) {
@@ -36,7 +39,7 @@ export default function Navbar() {
     }, [isDesktop]);
 
     const handleLogin = () => {
-        window.location.href = "/api/auth/login";
+        window.location.href = `${process.env.VITE_APP_API_URL}/api/auth/login`;
     };
 
     const handleLogout = async () => {
