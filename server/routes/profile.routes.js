@@ -1,202 +1,102 @@
 const express = require("express");
-const router = express.Router();
 const axios = require("axios");
-const spotifyConfig = require("../config/spotify.config");
-const Analysis = require("../models/analysis.model");
-const { analyzeMusicTaste } = require("../services/ai.service");
-const { generateProfileImage } = require("../services/image.service");
-const {
-    profilePrompt,
-    archetypePrompt,
-    emojiPrompt,
-} = require("../utils/prompts");
+const router = express.Router();
+const profileController = require("../controllers/profile.controller.js");
+const { apiBaseUrl } = require("../config/spotify.config.js");
 
-// Get existing analysis
 router.get("/", async (req, res) => {
-    if (!req.session.userId) {
+    if (!req.session.accessToken) {
         return res.status(401).json({ error: "Unauthorized" });
     }
 
     try {
-        const analysis = await Analysis.findByUserId(req.session.userId);
-        if (!analysis) {
-            return res.status(404).json({ error: "No analysis found" });
-        }
-
-        res.json({
-            personality: analysis.personality_summary,
-            archetype: analysis.music_archetype,
-            description: analysis.music_archetype, // Using archetype as description
-            emojis: analysis.music_emojis.split(" "), // Split emojis into array
-            horoscope: generateHoroscope(analysis.music_archetype), // Add helper function
-            genres: analysis.top_genres,
-            imageUrl: analysis.profile_image_url,
+        const profile = await axios.get(`${apiBaseUrl}/me`, {
+            headers: { Authorization: `Bearer ${req.session.accessToken}` },
         });
+        res.json(profile);
     } catch (error) {
-        console.error("Error fetching analysis:", error);
-        res.status(500).json({ error: "Failed to fetch analysis" });
+        console.error("Error fetching profile:", error);
+        res.status(500).json({ error: "Failed to fetch profile" });
     }
 });
 
-// Generate new analysis
-router.post("/generate", async (req, res) => {
-    if (!req.session.accessToken || !req.session.userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-
+// Get user's top artists
+router.get("/top-artists", async (req, res) => {
     try {
         const { time_range = "medium_term" } = req.query;
+        const { access_token } = req.session.accessToken;
 
-        // Fetch fresh data from Spotify
-        const [tracksResponse, artistsResponse] = await Promise.all([
-            axios.get(
-                `${spotifyConfig.apiBaseUrl}/me/top/tracks?time_range=${time_range}&limit=50`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${req.session.accessToken}`,
-                    },
-                }
-            ),
-            axios.get(
-                `${spotifyConfig.apiBaseUrl}/me/top/artists?time_range=${time_range}&limit=50`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${req.session.accessToken}`,
-                    },
-                }
-            ),
-        ]);
-
-        const topTracks = tracksResponse.data.items;
-        const topArtists = artistsResponse.data.items;
-
-        // Process genres
-        const genres = {};
-        topArtists.forEach((artist) => {
-            artist.genres.forEach((genre) => {
-                genres[genre] = (genres[genre] || 0) + 1;
-            });
+        const response = await axios.get(`${apiBaseUrl}/me/top/artists`, {
+            headers: { Authorization: `Bearer ${access_token}` },
+            params: {
+                time_range,
+                limit: 50,
+            },
         });
 
-        const sortedGenres = Object.entries(genres)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .map(([genre]) => genre);
-
-        // AI Analysis
-        const [personality, archetype, emojis] = await Promise.all([
-            analyzeMusicTaste(
-                profilePrompt({
-                    topTracks: topTracks.slice(0, 10),
-                    topArtists: topArtists.slice(0, 10),
-                    topGenres: sortedGenres,
-                })
-            ),
-            analyzeMusicTaste(
-                archetypePrompt({
-                    topTracks: topTracks.slice(0, 10),
-                    topArtists: topArtists.slice(0, 10),
-                    topGenres: sortedGenres,
-                })
-            ),
-            analyzeMusicTaste(
-                emojiPrompt({
-                    topTracks: topTracks.slice(0, 10),
-                    topArtists: topArtists.slice(0, 10),
-                    topGenres: sortedGenres,
-                })
-            ),
-        ]);
-
-        // Generate profile image
-        const profileImageUrl = await generateProfileImage({
-            username: req.session.displayName,
-            topGenres: sortedGenres,
-            topArtists: topArtists.slice(0, 3).map((a) => a.name),
-            archetype,
-            emojis,
-            personality: personality.substring(0, 200) + "...",
-        });
-
-        // Save to database
-        const analysisData = {
-            user_id: req.session.userId,
-            time_range,
-            top_tracks: topTracks,
-            top_artists: topArtists,
-            top_genres: sortedGenres,
-            personality_summary: personality,
-            music_archetype: archetype,
-            music_emojis: emojis,
-            profile_image_url: profileImageUrl,
-        };
-
-        await Analysis.upsert(analysisData);
-
-        // Return in expected frontend format
         res.json({
-            personality,
-            archetype,
-            description: archetype,
-            emojis: emojis.split(" "),
-            horoscope: generateHoroscope(archetype),
-            genres: sortedGenres,
-            imageUrl: profileImageUrl,
+            items: response.data.items.map((artist) => ({
+                id: artist.id,
+                name: artist.name,
+                genres: artist.genres,
+                images: artist.images,
+                popularity: artist.popularity,
+                uri: artist.uri,
+            })),
         });
     } catch (error) {
-        console.error("Error generating analysis:", error);
-        res.status(500).json({ error: "Failed to generate analysis" });
+        console.error(
+            "Top artists error:",
+            error.response?.data || error.message
+        );
+        res.status(error.response?.status || 500).json({
+            error: "Failed to fetch top artists",
+            details: error.response?.data || error.message,
+        });
     }
 });
 
-// Generate shareable image
-router.post("/image", async (req, res) => {
-    if (!req.session.userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-
+// Get user's top tracks
+router.get("/top-tracks", async (req, res) => {
     try {
-        const analysis = await Analysis.findByUserId(req.session.userId);
-        if (!analysis) {
-            return res.status(404).json({ error: "No analysis found" });
-        }
+        const { time_range = "medium_term" } = req.query;
+        const { access_token } = req.session.accessToken;
 
-        // Generate new image if none exists or force refresh
-        const imageUrl = await generateProfileImage({
-            username: req.session.displayName,
-            topGenres: analysis.top_genres,
-            topArtists: analysis.top_artists.slice(0, 3).map((a) => a.name),
-            archetype: analysis.music_archetype,
-            emojis: analysis.music_emojis,
-            personality: analysis.personality_summary.substring(0, 200) + "...",
+        const response = await axios.get(`${apiBaseUrl}/me/top/tracks`, {
+            headers: { Authorization: `Bearer ${access_token}` },
+            params: {
+                time_range,
+                limit: 50,
+            },
         });
 
-        // Update analysis with new image URL
-        await Analysis.upsert({
-            ...analysis,
-            profile_image_url: imageUrl,
+        res.json({
+            items: response.data.items.map((track) => ({
+                id: track.id,
+                name: track.name,
+                artists: track.artists.map((a) => ({ id: a.id, name: a.name })),
+                album: {
+                    id: track.album.id,
+                    name: track.album.name,
+                    images: track.album.images,
+                },
+                duration_ms: track.duration_ms,
+                popularity: track.popularity,
+                uri: track.uri,
+            })),
         });
-
-        res.json({ imageUrl });
     } catch (error) {
-        console.error("Error generating image:", error);
-        res.status(500).json({ error: "Failed to generate image" });
+        console.error(
+            "Top tracks error:",
+            error.response?.data || error.message
+        );
+        res.status(error.response?.status || 500).json({
+            error: "Failed to fetch top tracks",
+            details: error.response?.data || error.message,
+        });
     }
 });
 
-// Helper function for horoscope generation
-function generateHoroscope(archetype) {
-    const horoscopes = {
-        "The Nostalgic Dreamer":
-            "Your musical journey is about to take a beautiful turn back in time.",
-        "The Eclectic Explorer":
-            "New sounds are coming your way - stay open to unexpected discoveries.",
-        // Add more archetype-specific horoscopes
-    };
-    return (
-        horoscopes[archetype] ||
-        "Your music stars are aligning for an amazing listening experience."
-    );
-}
+router.get("/analysis", profileController.getProfile);
 
 module.exports = router;

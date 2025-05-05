@@ -1,11 +1,16 @@
 const express = require("express");
 const router = express.Router();
 const authController = require("../controllers/auth.controller.js");
+const { User } = require("../models/user.model.js");
 
 router.get("/login", authController.login);
+
 router.get("/callback", authController.callback);
+
 router.post("/refresh", authController.refreshToken);
+
 router.post("/logout", authController.logout);
+
 router.get("/me", async (req, res) => {
     if (!req.session.userId) {
         return res.status(401).json({ error: "Unauthorized" });
@@ -29,14 +34,6 @@ router.get("/me", async (req, res) => {
     }
 });
 
-// Add this to your existing auth routes
-router.get("/status", (req, res) => {
-    res.json({ isLoggedIn: !!req.session.userId });
-});
+router.get("/status", authController.status);
 
 module.exports = router;
-
-console.log(
-    "Auth routes loaded",
-    router.stack.map((r) => r.route.path)
-);

@@ -11,7 +11,8 @@ const pgSession = require("connect-pg-simple")(session);
 
 // Import routes
 const authRoutes = require("./routes/auth.routes");
-const profileRoutes = require("./routes/profile.routes");
+const profileRoutes = require("./croutes/profile.routes");
+const analysisRoute = require("./routes/analysis.routes");
 const playlistRoutes = require("./routes/playlist.routes");
 
 // Database configuration
@@ -56,7 +57,7 @@ app.use(
         cookie: {
             secure: process.env.NODE_ENV === "production",
             httpOnly: true,
-            sameSite: "lax",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 24 * 60 * 60 * 1000, // 1 day
         },
         name: "soundSouls.sid",
@@ -71,6 +72,7 @@ app.use(morgan("dev"));
 // ======================
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/analysis", analysisRoute);
 app.use("/api/playlist", playlistRoutes);
 
 // ======================

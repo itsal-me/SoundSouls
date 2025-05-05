@@ -71,7 +71,9 @@ export default function ProfilePage() {
 
                 // Fetch top artists
                 const artistsResponse = await fetch(
-                    `/api/profile/top-artists?time_range=${timeRange}`,
+                    `${
+                        import.meta.env.VITE_APP_API_URL
+                    }/api/profile/top-artists?time_range=${timeRange}`,
                     {
                         credentials: "include",
                     }
@@ -86,7 +88,9 @@ export default function ProfilePage() {
 
                 // Fetch top tracks
                 const tracksResponse = await fetch(
-                    `/api/profile/top-tracks?time_range=${timeRange}`,
+                    `${
+                        import.meta.env.VITE_APP_API_URL
+                    }/api/profile/top-tracks?time_range=${timeRange}`,
                     {
                         credentials: "include",
                     }
