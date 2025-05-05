@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     Music2,
@@ -12,6 +12,27 @@ import { Card, CardContent } from "@/components/ui/card";
 export default function HomePage() {
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // Check if user is logged in
+    const checkLoginStatus = async () => {
+        try {
+            const response = await fetch(
+                `${import.meta.env.VITE_APP_API_URL}/api/auth/status`,
+                {
+                    credentials: "include",
+                }
+            );
+            const data = await response.json();
+            setIsLoggedIn(data.isLoggedIn);
+        } catch (error) {
+            console.error("Error checking login status:", error);
+            setIsLoggedIn(false);
+        }
+    };
+    useEffect(() => {
+        checkLoginStatus();
+    }, []);
 
     const handleConnectSpotify = () => {
         setIsLoading(true);
@@ -34,16 +55,26 @@ export default function HomePage() {
                         AI-powered analysis of your Spotify listening habits.
                     </p>
                     <div className="flex justify-center gap-4 pt-4">
-                        <Button
-                            onClick={handleConnectSpotify}
-                            className="bg-green-500 hover:bg-green-600"
-                            size="lg"
-                            disabled={isLoading}
-                        >
-                            {isLoading
-                                ? "Connecting..."
-                                : "Connect with Spotify"}
-                        </Button>
+                        {!isLoggedIn ? (
+                            <Button
+                                onClick={handleConnectSpotify}
+                                className="bg-green-500 hover:bg-green-600"
+                                size="lg"
+                                disabled={isLoading}
+                            >
+                                {isLoading
+                                    ? "Connecting..."
+                                    : "Connect with Spotify"}
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => navigate("/profile")}
+                                className="bg-green-500 hover:bg-green-600"
+                                size="lg"
+                            >
+                                Profile
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="lg"
@@ -171,14 +202,24 @@ export default function HomePage() {
                     Connect your Spotify account and get your personalized music
                     personality profile in minutes.
                 </p>
-                <Button
-                    onClick={handleConnectSpotify}
-                    className="mt-8 bg-green-500 hover:bg-green-600"
-                    size="lg"
-                    disabled={isLoading}
-                >
-                    {isLoading ? "Connecting..." : "Connect with Spotify"}
-                </Button>
+                {!isLoggedIn ? (
+                    <Button
+                        onClick={handleConnectSpotify}
+                        className="mt-8 bg-green-500 hover:bg-green-600"
+                        size="lg"
+                        disabled={isLoading}
+                    >
+                        {isLoading ? "Connecting..." : "Connect with Spotify"}
+                    </Button>
+                ) : (
+                    <Button
+                        onClick={() => navigate("/profile")}
+                        className="mt-8 bg-green-500 hover:bg-green-600"
+                        size="lg"
+                    >
+                        Profile
+                    </Button>
+                )}
             </section>
         </div>
     );
