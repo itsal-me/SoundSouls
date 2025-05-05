@@ -122,9 +122,7 @@ exports.callback = async (req, res) => {
             req.session.sessionStart = new Date().toISOString();
 
             res.redirect(
-                `${
-                    process.env.FRONTEND_URL || "http://localhost:5173"
-                }/callback?access_token=${access_token}&refresh_token=${refresh_token}`
+                `${process.env.FRONTEND_URL}/callback?access_token=${access_token}&refresh_token=${refresh_token}`
             );
         });
     } catch (error) {

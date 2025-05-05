@@ -39,15 +39,22 @@ export default function Navbar() {
     }, [isDesktop]);
 
     const handleLogin = () => {
-        window.location.href = `${process.env.VITE_APP_API_URL}/api/auth/login`;
+        window.location.href = `${
+            import.meta.env.VITE_APP_API_URL
+        }/api/auth/login`;
     };
 
     const handleLogout = async () => {
         try {
-            await fetch("/api/auth/logout", {
-                method: "POST",
-                credentials: "include",
-            });
+            await fetch(
+                (window.location.href = `${
+                    import.meta.env.VITE_APP_API_URL
+                }/api/auth/logout`),
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            );
             setIsLoggedIn(false);
             window.location.href = "/";
         } catch (error) {
