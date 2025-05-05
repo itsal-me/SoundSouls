@@ -8,6 +8,7 @@ import ProfilePage from "@/pages/Profile";
 import AnalysisPage from "@/pages/Analysis";
 import PlaylistPage from "@/pages/Playlist";
 import NotFoundPage from "@/pages/NotFound";
+import AboutPage from "./pages/About";
 
 function App() {
     return (
@@ -16,6 +17,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Layout />}>
                         <Route index element={<HomePage />} />
+                        <Route path="about" element={<AboutPage />} />
                         <Route path="profile" element={<ProfilePage />} />
                         <Route path="analysis" element={<AnalysisPage />} />
                         <Route path="playlist" element={<PlaylistPage />} />

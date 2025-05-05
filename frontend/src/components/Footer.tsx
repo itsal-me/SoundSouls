@@ -51,7 +51,7 @@ export default function Footer() {
                         <h3 className="text-sm font-medium">Connect</h3>
                         <div className="flex gap-4">
                             <a
-                                href="https://github.com"
+                                href="https://github.com/itsal-me/soundsouls"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-muted-foreground hover:text-foreground"

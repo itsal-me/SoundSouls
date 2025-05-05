@@ -15,12 +15,12 @@ export default function Navbar() {
         // Check if user is logged in
         const checkLoginStatus = async () => {
             try {
-                const response = await fetch("/api/auth/me", {
+                const response = await fetch("/api/auth/status", {
                     credentials: "include",
                 });
                 const data = await response.json();
-                setIsLoggedIn(data.email !== undefined);
-            } catch (error: any) {
+                setIsLoggedIn(data.isLoggedIn);
+            } catch (error) {
                 console.error("Error checking login status:", error);
                 setIsLoggedIn(false);
             }
@@ -54,6 +54,7 @@ export default function Navbar() {
 
     const navLinks = [
         { name: "Home", path: "/" },
+        { name: "About", path: "/about" },
         { name: "Profile", path: "/profile", requiresAuth: true },
         { name: "Analysis", path: "/analysis", requiresAuth: true },
         { name: "Playlist", path: "/playlist", requiresAuth: true },
