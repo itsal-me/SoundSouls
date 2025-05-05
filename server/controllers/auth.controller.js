@@ -1,5 +1,5 @@
 const axios = require("axios");
-const qs = require("querystring");
+// const qs = require("querystring");
 const spotifyConfig = require("../config/spotify.config");
 const supabase = require("../config/supabase.config");
 const crypto = require("crypto");
@@ -14,6 +14,7 @@ const generateRandomString = (length) => {
 
 exports.login = (req, res) => {
     const state = generateRandomString(16);
+    console.log("Generated state:", state);
     req.session.csrfToken = generateRandomString(32);
     req.session.state = state;
     req.session.loginAttemptAt = new Date().toISOString();
@@ -35,6 +36,7 @@ exports.login = (req, res) => {
         };
 
         authUrl.search = new URLSearchParams(params).toString();
+        console.log("Redirecting to:", authUrl.toString());
         res.redirect(authUrl.toString());
     });
 };

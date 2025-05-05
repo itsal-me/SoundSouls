@@ -32,12 +32,10 @@ Thumbs.db
 coverage/
 *.lcov
 
-
-
 # Build artifacts
 *.tgz
 
-# Puppeteer / Supabase (if applicable)
+# # Puppeteer / Supabase (if applicable)
 .puppeteer/
 .supabase/
 

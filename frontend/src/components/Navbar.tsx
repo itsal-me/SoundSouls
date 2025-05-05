@@ -16,7 +16,7 @@ export default function Navbar() {
         const checkLoginStatus = async () => {
             try {
                 const response = await fetch(
-                    `${process.env.VITE_APP_API_URL}/api/auth/status`,
+                    `${import.meta.env.VITE_APP_API_URL}/api/auth/status`,
                     {
                         credentials: "include",
                     }
