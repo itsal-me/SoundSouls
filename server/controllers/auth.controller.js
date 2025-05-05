@@ -168,21 +168,21 @@ exports.callback = async (req, res) => {
         req.session.state = null;
         req.session.stateExpires = null;
     }
-
-    //helper function to log authentication attempts
-    async function logAuthAttempt(req, { error = null }) {
-        try {
-            await supabase.from("auth_attempts").insert({
-                ip_address: req.ip,
-                user_agent: req.headers["user-agent"],
-                error: error,
-                attempted_at: new Date().toISOString(),
-            });
-        } catch (logError) {
-            console.error("Failed to log auth attempt:", logError);
-        }
-    }
 };
+
+//helper function to log authentication attempts
+async function logAuthAttempt(req, { error = null }) {
+    try {
+        await supabase.from("auth_attempts").insert({
+            ip_address: req.ip,
+            user_agent: req.headers["user-agent"],
+            error: error,
+            attempted_at: new Date().toISOString(),
+        });
+    } catch (logError) {
+        console.error("Failed to log auth attempt:", logError);
+    }
+}
 
 exports.refreshToken = async (req, res) => {
     const { refresh_token } = req.body;
