@@ -57,11 +57,9 @@ app.use(
             secure: process.env.NODE_ENV === "production",
             httpOnly: true,
             sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000,
-            domain: process.env.COOKIE_DOMAIN || undefined,
+            maxAge: 24 * 60 * 60 * 1000, // 1 day
         },
         name: "soundSouls.sid",
-        rolling: true,
     })
 );
 

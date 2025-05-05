@@ -20,7 +20,7 @@ exports.login = (req, res) => {
     req.session.state = state;
 
     // Set state expiration (5 minutes)
-    req.session.stateExpires = Date.now() + 300000;
+    req.session.stateExpires = new Date(Date.now() + 300000);
 
     req.session.loginAttemptAt = new Date().toISOString();
 
