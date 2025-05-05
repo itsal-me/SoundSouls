@@ -16,7 +16,12 @@ exports.login = (req, res) => {
     const state = generateRandomString(16);
     console.log("Generated state:", state);
     req.session.csrfToken = generateRandomString(32);
+    // Store state in session
     req.session.state = state;
+
+    // Set state expiration (5 minutes)
+    req.session.stateExpires = Date.now() + 300000;
+
     req.session.loginAttemptAt = new Date().toISOString();
 
     req.session.save((err) => {
@@ -42,11 +47,39 @@ exports.login = (req, res) => {
 };
 
 exports.callback = async (req, res) => {
-    const { code, state } = req.query;
+    const { code, state, error: spotifyError } = req.query;
     const storedState = req.session.state;
+    const stateExpires = req.session.stateExpires;
 
-    if (!state || state !== storedState) {
-        return res.status(400).json({ error: "State mismatch" });
+    // Handle potential errors from Spotify
+    if (spotifyError) {
+        await logAuthAttempt(req, { error: spotifyError });
+        return res.redirect(
+            `${process.env.FRONTEND_URL}/login?error=${encodeURIComponent(
+                spotifyError
+            )}`
+        );
+    }
+
+    // Validate state parameter
+
+    if (!state || !storedState || state !== storedState) {
+        const errorMsg = "State mismatch - Possible CSRF attack";
+        console.error(errorMsg, { received: state, expected: storedState });
+        await logAuthAttempt(req, { error: errorMsg });
+        return res.redirect(
+            `${process.env.FRONTEND_URL}/login?error=state_mismatch`
+        );
+    }
+
+    // Check state expiration (5 minute window)
+    if (Date.now() > stateExpires) {
+        const errorMsg = "State expired - Authentication took too long";
+        console.error(errorMsg);
+        await logAuthAttempt(req, { error: errorMsg });
+        return res.redirect(
+            `${process.env.FRONTEND_URL}/login?error=state_expired`
+        );
     }
 
     try {
