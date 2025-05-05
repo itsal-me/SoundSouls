@@ -1,15 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const spotifyConfig = require("./config/spotify.config");
-const Analysis = require("./models/analysis.model");
-const { analyzeMusicTaste } = require("./services/ai.service");
-const { generateProfileImage } = require("./services/image.service");
+const spotifyConfig = require("../config/spotify.config");
+const Analysis = require("../models/analysis.model");
+const { analyzeMusicTaste } = require("../services/ai.service");
+const { generateProfileImage } = require("../services/image.service");
 const {
     profilePrompt,
     archetypePrompt,
     emojiPrompt,
-} = require("./utils/prompts");
+} = require("../utils/prompts");
 
 // Get existing analysis
 router.get("/", async (req, res) => {

@@ -1,9 +1,9 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
-const spotifyConfig = require("./config/spotify.config");
-const { analyzeMusicTaste } = require("./services/ai.service");
-const { playlistPrompt } = require("./utils/prompts");
+const spotifyConfig = require("../config/spotify.config");
+const { analyzeMusicTaste } = require("../services/ai.service");
+const { playlistPrompt } = require("../utils/prompts");
 
 // Get user's saved playlists
 router.get("/", async (req, res) => {
