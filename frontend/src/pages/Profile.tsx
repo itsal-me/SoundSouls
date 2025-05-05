@@ -49,7 +49,7 @@ export default function ProfilePage() {
 
                 // Fetch user profile
                 const profileResponse = await fetch(
-                    `${process.env.VITE_APP_API_URL}/api/profile`,
+                    `${import.meta.env.VITE_APP_API_URL}/api/profile`,
                     {
                         credentials: "include",
                     }

@@ -39,7 +39,7 @@ export default function AnalysisPage() {
                 setIsLoading(true);
 
                 const response = await fetch(
-                    `${process.env.VITE_APP_API_URL}/api/analysis`,
+                    `${import.meta.env.VITE_APP_API_URL}/api/analysis`,
                     {
                         credentials: "include",
                     }
@@ -81,7 +81,7 @@ export default function AnalysisPage() {
             setIsGenerating(true);
 
             const response = await fetch(
-                `${process.env.VITE_APP_API_URL}/api/analysis/generate`,
+                `${import.meta.env.VITE_APP_API_URL}/api/analysis/generate`,
                 {
                     method: "POST",
                     credentials: "include",
@@ -109,7 +109,7 @@ export default function AnalysisPage() {
             setIsGenerating(true);
 
             const response = await fetch(
-                `${process.env.VITE_APP_API_URL}/api/analysis/image`,
+                `${import.meta.env.VITE_APP_API_URL}/api/analysis/image`,
                 {
                     method: "POST",
                     credentials: "include",

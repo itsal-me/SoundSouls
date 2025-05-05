@@ -59,7 +59,7 @@ export default function PlaylistPage() {
                 setIsLoading(true);
 
                 const response = await fetch(
-                    `${process.env.VITE_APP_API_URL}/api/playlists`,
+                    `${import.meta.env.VITE_APP_API_URL}/api/playlists`,
                     {
                         credentials: "include",
                     }
@@ -100,7 +100,7 @@ export default function PlaylistPage() {
             setIsGenerating(true);
 
             const response = await fetch(
-                `${process.env.VITE_APP_API_URL}/api/playlists/generate`,
+                `${import.meta.env.VITE_APP_API_URL}/api/playlists/generate`,
                 {
                     method: "POST",
                     headers: {
@@ -137,7 +137,7 @@ export default function PlaylistPage() {
             setIsSaving(true);
 
             const response = await fetch(
-                `${process.env.VITE_APP_API_URL}/api/playlists/save`,
+                `${import.meta.env.VITE_APP_API_URL}/api/playlists/save`,
                 {
                     method: "POST",
                     headers: {
