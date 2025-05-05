@@ -61,9 +61,9 @@ app.use(
 );
 
 // Routes
-app.use("/auth", authRoutes);
-app.use("/profile", profileRoutes);
-app.use("/playlist", playlistRoutes);
+app.use("api/auth", authRoutes);
+app.use("api/profile", profileRoutes);
+app.use("api/playlist", playlistRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;
