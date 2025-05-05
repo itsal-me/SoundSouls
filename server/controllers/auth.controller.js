@@ -163,16 +163,24 @@ exports.callback = async (req, res) => {
         });
     } catch (error) {
         console.error("Authentication error:", error);
+    } finally {
+        // Clear the state regardless of outcome
+        req.session.state = null;
+        req.session.stateExpires = null;
+    }
 
-        // Log failed attempt
-        await supabase.from("auth_attempts").insert({
-            ip_address: req.ip,
-            user_agent: req.headers["user-agent"],
-            error: error.message,
-            attempted_at: new Date().toISOString(),
-        });
-
-        res.status(500).json({ error: "Authentication failed" });
+    //helper function to log authentication attempts
+    async function logAuthAttempt(req, { error = null }) {
+        try {
+            await supabase.from("auth_attempts").insert({
+                ip_address: req.ip,
+                user_agent: req.headers["user-agent"],
+                error: error,
+                attempted_at: new Date().toISOString(),
+            });
+        } catch (logError) {
+            console.error("Failed to log auth attempt:", logError);
+        }
     }
 };
 
