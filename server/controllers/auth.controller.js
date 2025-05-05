@@ -41,7 +41,7 @@ exports.login = (req, res) => {
         };
 
         authUrl.search = new URLSearchParams(params).toString();
-        console.log("Redirecting to:", authUrl.toString());
+
         res.redirect(authUrl.toString());
     });
 };
@@ -157,9 +157,7 @@ exports.callback = async (req, res) => {
             req.session.csrfToken = generateRandomString(32);
             req.session.sessionStart = new Date().toISOString();
 
-            res.redirect(
-                `${process.env.FRONTEND_URL}/callback?access_token=${access_token}&refresh_token=${refresh_token}`
-            );
+            res.redirect(`${process.env.FRONTEND_URL}/profile`);
         });
     } catch (error) {
         console.error("Authentication error:", error);
