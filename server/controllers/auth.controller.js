@@ -123,7 +123,7 @@ exports.callback = async (req, res) => {
 
             res.redirect(
                 `${
-                    process.env.FRONTEND_REDIRECT_URI || "http://localhost:5173"
+                    process.env.FRONTEND_URL || "http://localhost:5173"
                 }/callback?access_token=${access_token}&refresh_token=${refresh_token}`
             );
         });
