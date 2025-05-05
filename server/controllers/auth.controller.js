@@ -49,13 +49,14 @@ exports.callback = async (req, res) => {
 
     try {
         // Get access token
+        const params = new URLSearchParams();
+        params.append("code", code);
+        params.append("redirect_uri", spotifyConfig.redirectUri);
+        params.append("grant_type", "authorization_code");
+
         const tokenResponse = await axios.post(
             spotifyConfig.tokenUrl,
-            qs.stringify({
-                code,
-                redirect_uri: spotifyConfig.redirectUri,
-                grant_type: "authorization_code",
-            }),
+            params.toString(), // converts to x-www-form-urlencoded string
             {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
@@ -144,12 +145,13 @@ exports.refreshToken = async (req, res) => {
     const { refresh_token } = req.body;
 
     try {
+        const params = new URLSearchParams();
+        params.append("grant_type", "refresh_token");
+        params.append("refresh_token", refresh_token);
+
         const response = await axios.post(
             spotifyConfig.tokenUrl,
-            qs.stringify({
-                grant_type: "refresh_token",
-                refresh_token: refresh_token,
-            }),
+            params.toString(),
             {
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
