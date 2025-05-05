@@ -2,37 +2,50 @@ const axios = require("axios");
 const qs = require("querystring");
 const spotifyConfig = require("../config/spotify.config");
 const supabase = require("../config/supabase.config");
-const { generateRandomString } = require("../utils/helpers");
+const crypto = require("crypto");
 
-// Initiate Spotify login
-const login = (req, res) => {
-    const state = generateRandomString(16);
-    req.session.state = state;
-
-    const authUrl = new URL(spotifyConfig.authUrl);
-    const params = {
-        response_type: "code",
-        client_id: spotifyConfig.clientId,
-        scope: spotifyConfig.scopes.join(" "),
-        redirect_uri: spotifyConfig.redirectUri,
-        state: state,
-        show_dialog: true,
-    };
-
-    authUrl.search = new URLSearchParams(params).toString();
-    res.redirect(authUrl.toString());
+// Generate secure random string
+const generateRandomString = (length) => {
+    return crypto
+        .randomBytes(Math.ceil(length / 2))
+        .toString("hex")
+        .slice(0, length);
 };
 
-// Handle Spotify callback
-const callback = async (req, res) => {
+exports.login = (req, res) => {
+    const state = generateRandomString(16);
+    req.session.csrfToken = generateRandomString(32);
+    req.session.state = state;
+    req.session.loginAttemptAt = new Date().toISOString();
+
+    req.session.save((err) => {
+        if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+
+        const authUrl = new URL(spotifyConfig.authUrl);
+        const params = {
+            response_type: "code",
+            client_id: spotifyConfig.clientId,
+            scope: spotifyConfig.scopes.join(" "),
+            redirect_uri: spotifyConfig.redirectUri,
+            state: state,
+            show_dialog: true,
+        };
+
+        authUrl.search = new URLSearchParams(params).toString();
+        res.redirect(authUrl.toString());
+    });
+};
+
+exports.callback = async (req, res) => {
     const { code, state } = req.query;
     const storedState = req.session.state;
 
-    if (state === null || state !== storedState) {
+    if (!state || state !== storedState) {
         return res.status(400).json({ error: "State mismatch" });
     }
-
-    req.session.state = null;
 
     try {
         // Get access token
@@ -57,15 +70,15 @@ const callback = async (req, res) => {
 
         const { access_token, refresh_token, expires_in } = tokenResponse.data;
 
-        // Get user profile from Spotify
+        // Get user profile
         const userResponse = await axios.get(`${spotifyConfig.apiBaseUrl}/me`, {
             headers: { Authorization: `Bearer ${access_token}` },
         });
 
         const { id, display_name, email, images } = userResponse.data;
 
-        // Save or update user in Supabase
-        const { data: user, error } = await supabase
+        // Save user session to database
+        const { data: user, error: userError } = await supabase
             .from("users")
             .upsert(
                 {
@@ -84,25 +97,52 @@ const callback = async (req, res) => {
             .select()
             .single();
 
-        if (error) throw error;
+        if (userError) throw userError;
 
-        // Set session
-        req.session.userId = user.id;
-        req.session.spotifyId = id;
-        req.session.accessToken = access_token;
+        // Create session audit log
+        const { error: auditError } = await supabase
+            .from("session_audit")
+            .insert({
+                user_id: user.id,
+                ip_address: req.ip,
+                user_agent: req.headers["user-agent"],
+                login_at: new Date().toISOString(),
+            });
 
-        // Redirect to frontend with tokens
-        res.redirect(
-            `http://localhost:5173/callback?access_token=${access_token}&refresh_token=${refresh_token}`
-        );
+        if (auditError) throw auditError;
+
+        // Set session data
+        req.session.regenerate((err) => {
+            if (err) throw err;
+
+            req.session.userId = user.id;
+            req.session.spotifyId = id;
+            req.session.accessToken = access_token;
+            req.session.csrfToken = generateRandomString(32);
+            req.session.sessionStart = new Date().toISOString();
+
+            res.redirect(
+                `${
+                    process.env.FRONTEND_REDIRECT_URI || "http://localhost:5173"
+                }/callback?access_token=${access_token}&refresh_token=${refresh_token}`
+            );
+        });
     } catch (error) {
-        console.error("Error in callback:", error);
+        console.error("Authentication error:", error);
+
+        // Log failed attempt
+        await supabase.from("auth_attempts").insert({
+            ip_address: req.ip,
+            user_agent: req.headers["user-agent"],
+            error: error.message,
+            attempted_at: new Date().toISOString(),
+        });
+
         res.status(500).json({ error: "Authentication failed" });
     }
 };
 
-// Refresh token
-const refreshToken = async (req, res) => {
+exports.refreshToken = async (req, res) => {
     const { refresh_token } = req.body;
 
     try {
@@ -126,7 +166,7 @@ const refreshToken = async (req, res) => {
 
         const { access_token, expires_in } = response.data;
 
-        // Update user in Supabase
+        // Update user token in database
         const { error } = await supabase
             .from("users")
             .update({
@@ -139,18 +179,86 @@ const refreshToken = async (req, res) => {
 
         if (error) throw error;
 
+        // Update session if exists
+        if (req.session) {
+            req.session.accessToken = access_token;
+            req.session.touch();
+        }
+
         res.json({ access_token });
     } catch (error) {
-        console.error("Error refreshing token:", error);
+        console.error("Token refresh error:", error);
         res.status(500).json({ error: "Failed to refresh token" });
     }
 };
 
-// Logout
-const logout = (req, res) => {
-    req.session.destroy();
-    res.clearCookie("connect.sid");
-    res.json({ success: true });
+exports.logout = async (req, res) => {
+    if (!req.session.userId) {
+        return res.status(400).json({ error: "No active session" });
+    }
+
+    try {
+        // Update session audit log
+        await supabase
+            .from("session_audit")
+            .update({
+                logout_at: new Date().toISOString(),
+                session_duration: `${
+                    (new Date() - new Date(req.session.sessionStart)) / 1000
+                } seconds`,
+            })
+            .eq("user_id", req.session.userId)
+            .is("logout_at", null)
+            .order("login_at", { ascending: false })
+            .limit(1);
+
+        // Destroy session
+        req.session.destroy((err) => {
+            if (err) throw err;
+
+            res.clearCookie("soundSouls.sid", {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === "production",
+                sameSite: "lax",
+                domain: process.env.COOKIE_DOMAIN || undefined,
+            });
+
+            res.json({ success: true });
+        });
+    } catch (error) {
+        console.error("Logout error:", error);
+        res.status(500).json({ error: "Failed to logout" });
+    }
 };
 
-module.exports = { login, callback, refreshToken, logout };
+exports.status = async (req, res) => {
+    if (!req.session.userId) {
+        return res.json({ isLoggedIn: false });
+    }
+
+    try {
+        // Verify session in database
+        const { data: user } = await supabase
+            .from("users")
+            .select("id, spotify_id, display_name, profile_image")
+            .eq("id", req.session.userId)
+            .single();
+
+        if (!user) {
+            req.session.destroy();
+            return res.json({ isLoggedIn: false });
+        }
+
+        res.json({
+            isLoggedIn: true,
+            user: {
+                id: user.spotify_id,
+                display_name: user.display_name,
+                profile_image: user.profile_image,
+            },
+        });
+    } catch (error) {
+        console.error("Session status error:", error);
+        res.json({ isLoggedIn: false });
+    }
+};
