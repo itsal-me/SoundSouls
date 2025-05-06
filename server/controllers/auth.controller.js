@@ -159,7 +159,7 @@ exports.callback = async (req, res) => {
                 ip_address: req.ip,
                 user_agent: req.headers["user-agent"],
                 login_at: new Date().toISOString(),
-                status: "success",
+                // status: "success",
             });
 
         if (auditError) throw auditError;
@@ -207,7 +207,7 @@ exports.callback = async (req, res) => {
 // Helper function to log authentication attempts
 async function logAuthAttempt(
     req,
-    { error = null, success = false, userId = null, spotifyId = null }
+    { error = null, userId = null, spotifyId = null }
 ) {
     try {
         await supabase.from("auth_attempts").insert({
@@ -216,7 +216,7 @@ async function logAuthAttempt(
             ip_address: req.ip,
             user_agent: req.headers["user-agent"],
             error: error,
-            success: success,
+
             attempted_at: new Date().toISOString(),
             session_id: req.sessionID,
         });
