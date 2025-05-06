@@ -90,7 +90,7 @@ exports.callback = async (req, res) => {
     }
 
     // Validate code parameter
-    if (!code || typeof code !== "string" || code.length > 256) {
+    if (!code || typeof code !== "string") {
         const errorMsg = "Invalid authorization code";
         console.error(errorMsg);
         await logAuthAttempt(req, { error: errorMsg });
