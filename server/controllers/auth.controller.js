@@ -366,7 +366,7 @@ exports.logout = async (req, res) => {
 
 exports.status = async (req, res) => {
     if (!req.session.userId) {
-        console.log(req.session.userId);
+        console.log(req.session);
         return res.json({ isLoggedIn: false });
     }
 
