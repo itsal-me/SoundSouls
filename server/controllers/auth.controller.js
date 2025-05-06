@@ -364,8 +364,8 @@ exports.logout = async (req, res) => {
             res.clearCookie("soundSouls.sid", {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === "production",
-                sameSite: "lax",
-                domain: process.env.COOKIE_DOMAIN || undefined,
+                sameSite: "none",
+                domain: process.env.COOKIE_DOMAIN,
             });
 
             res.json({ success: true });
@@ -383,9 +383,9 @@ exports.logout = async (req, res) => {
 };
 
 exports.status = async (req, res) => {
+    console.log(req.session);
+    console.log("console of usedId in status", req.session.userId);
     if (!req.session.userId) {
-        console.log(req.session);
-        console.log("Session expired or invalid user ID:", req.session.userId);
         return res.json({ isLoggedIn: false });
     }
 
