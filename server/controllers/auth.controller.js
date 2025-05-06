@@ -170,27 +170,45 @@ exports.callback = async (req, res) => {
             userId: user.id,
             spotifyId: id,
         });
-
-        // Create new session with regeneration to prevent fixation
-        req.session.regenerate((err) => {
+        // Create new session with regeneration
+        req.session.regenerate(async (err) => {
             if (err) {
                 console.error("Session regeneration error:", err);
-                throw err;
+                return res
+                    .status(500)
+                    .redirect(
+                        `${process.env.FRONTEND_URL}/error?code=session_fail`
+                    );
             }
 
-            // Store minimal session data
+            // Set new session data
+            console.log(user);
             req.session.userId = user.id;
+            console.log("User ID set in session:", user.id);
             req.session.spotifyId = id;
+            console.log("Spotify ID set in session:", id);
             req.session.csrfToken = generateRandomString(32);
             req.session.sessionStart = new Date().toISOString();
             req.session.tokenExpiresAt = tokenExpiresAt.toISOString();
 
-            // Clear sensitive data from old session
-            delete req.session.state;
-            delete req.session.stateExpires;
-            delete req.session.codeVerifier;
+            // Explicitly save the new session
+            req.session.save((saveErr) => {
+                if (saveErr) {
+                    console.error("Session save error:", saveErr);
+                    return res
+                        .status(500)
+                        .redirect(
+                            `${process.env.FRONTEND_URL}/error?code=session_save`
+                        );
+                }
 
-            res.redirect(`${process.env.FRONTEND_URL}/profile`);
+                // Set secure cookie headers for cross-origin
+                res.setHeader("Set-Cookie", [
+                    `connect.sid=${req.sessionID}; Path=/; HttpOnly; SameSite=None; Secure; Max-Age=86400`,
+                ]);
+
+                res.redirect(`${process.env.FRONTEND_URL}/profile`);
+            });
         });
     } catch (error) {
         console.error("Authentication error:", error);
@@ -367,6 +385,7 @@ exports.logout = async (req, res) => {
 exports.status = async (req, res) => {
     if (!req.session.userId) {
         console.log(req.session);
+        console.log("Session expired or invalid user ID:", req.session.userId);
         return res.json({ isLoggedIn: false });
     }
 
