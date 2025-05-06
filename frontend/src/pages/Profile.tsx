@@ -55,7 +55,7 @@ export default function ProfilePage() {
                     }
                 );
 
-                if (profileResponse.ok) {
+                if (!profileResponse.ok) {
                     if (profileResponse.status === 401) {
                         toast(
                             "Please connect your Spotify account to view your profile."
@@ -68,6 +68,7 @@ export default function ProfilePage() {
 
                 const profileData = await profileResponse.json();
                 setUserProfile(profileData);
+                console.log("User Profile Data:", profileData);
 
                 // Fetch top artists
                 const artistsResponse = await fetch(
@@ -79,7 +80,7 @@ export default function ProfilePage() {
                     }
                 );
 
-                if (artistsResponse.ok) {
+                if (!artistsResponse.ok) {
                     throw new Error("Failed to fetch top artists");
                 }
 
@@ -96,7 +97,7 @@ export default function ProfilePage() {
                     }
                 );
 
-                if (tracksResponse.ok) {
+                if (!tracksResponse.ok) {
                     throw new Error("Failed to fetch top tracks");
                 }
 

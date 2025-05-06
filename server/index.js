@@ -61,8 +61,19 @@ app.use(
             maxAge: 24 * 60 * 60 * 1000, // 1 day
         },
         name: "soundSouls.sid",
+        rolling: true,
     })
 );
+
+app.use((err, req, res, next) => {
+    if (err.name === "CSRFError") {
+        return res.status(403).json({ error: "Invalid CSRF token" });
+    }
+    if (err.message === "Session expired") {
+        return res.status(401).json({ error: "Session expired" });
+    }
+    next(err);
+});
 
 // Logging
 app.use(morgan("dev"));

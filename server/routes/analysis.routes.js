@@ -11,12 +11,10 @@ const {
     emojiPrompt,
 } = require("../utils/prompts");
 
-// Get existing analysis
-router.get("/", async (req, res) => {
-    if (!req.session.userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+const { verifySession } = require("../middleware/middleware.session");
 
+// Get existing analysis
+router.get("/", verifySession, async (req, res) => {
     try {
         const analysis = await Analysis.findByUserId(req.session.userId);
         if (!analysis) {
@@ -39,11 +37,7 @@ router.get("/", async (req, res) => {
 });
 
 // Generate new analysis
-router.post("/generate", async (req, res) => {
-    if (!req.session.accessToken || !req.session.userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-
+router.post("/generate", verifySession, async (req, res) => {
     try {
         const { time_range = "medium_term" } = req.query;
 
@@ -150,11 +144,7 @@ router.post("/generate", async (req, res) => {
 });
 
 // Generate shareable image
-router.post("/image", async (req, res) => {
-    if (!req.session.userId) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
-
+router.post("/image", verifySession, async (req, res) => {
     try {
         const analysis = await Analysis.findByUserId(req.session.userId);
         if (!analysis) {

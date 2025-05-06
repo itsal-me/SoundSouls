@@ -5,8 +5,10 @@ const spotifyConfig = require("../config/spotify.config");
 const { analyzeMusicTaste } = require("../services/ai.service");
 const { playlistPrompt } = require("../utils/prompts");
 
+const { verifySession } = require("../middleware/middleware.session");
+
 // Get user's saved playlists
-router.get("/", async (req, res) => {
+router.get("/", verifySession, async (req, res) => {
     if (!req.session.accessToken) {
         return res.status(401).json({ error: "Unauthorized" });
     }
@@ -37,7 +39,7 @@ router.get("/", async (req, res) => {
 });
 
 // Generate new playlist concept
-router.post("/generate", async (req, res) => {
+router.post("/generate", verifySession, async (req, res) => {
     if (!req.session.accessToken || !req.session.spotifyId) {
         return res.status(401).json({ error: "Unauthorized" });
     }
@@ -93,7 +95,7 @@ router.post("/generate", async (req, res) => {
 });
 
 // Save generated playlist to Spotify
-router.post("/save", async (req, res) => {
+router.post("/save", verifySession, async (req, res) => {
     if (!req.session.accessToken || !req.session.spotifyId) {
         return res.status(401).json({ error: "Unauthorized" });
     }

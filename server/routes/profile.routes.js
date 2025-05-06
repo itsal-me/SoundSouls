@@ -4,11 +4,9 @@ const router = express.Router();
 const profileController = require("../controllers/profile.controller.js");
 const { apiBaseUrl } = require("../config/spotify.config.js");
 
-router.get("/", async (req, res) => {
-    if (!req.session.accessToken) {
-        return res.status(401).json({ error: "Unauthorized" });
-    }
+const { verifySession } = require("../middleware/middleware.session");
 
+router.get("/", verifySession, async (req, res) => {
     try {
         const profile = await axios.get(`${apiBaseUrl}/me`, {
             headers: { Authorization: `Bearer ${req.session.accessToken}` },
@@ -21,7 +19,7 @@ router.get("/", async (req, res) => {
 });
 
 // Get user's top artists
-router.get("/top-artists", async (req, res) => {
+router.get("/top-artists", verifySession, async (req, res) => {
     try {
         const { time_range = "medium_term" } = req.query;
         const { access_token } = req.session.accessToken;
@@ -57,7 +55,7 @@ router.get("/top-artists", async (req, res) => {
 });
 
 // Get user's top tracks
-router.get("/top-tracks", async (req, res) => {
+router.get("/top-tracks", verifySession, async (req, res) => {
     try {
         const { time_range = "medium_term" } = req.query;
         const { access_token } = req.session.accessToken;
@@ -97,6 +95,6 @@ router.get("/top-tracks", async (req, res) => {
     }
 });
 
-router.get("/analysis", profileController.getProfile);
+router.get("/analysis", verifySession, profileController.getProfile);
 
 module.exports = router;
